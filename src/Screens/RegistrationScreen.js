@@ -48,7 +48,7 @@ export default class App extends React.Component {
         //         alert('User already exist')
         //     });
         const data = {
-            email: "john.doe@example.com",
+            email: "johnfgdxfchgjvdoe@example.com",
             first_name: "John",
             last_name: "Doe",
             username: "john.doe",
@@ -62,7 +62,7 @@ export default class App extends React.Component {
                 state: "CA",
                 postcode: "94103",
                 country: "US",
-                email: "john.doe@example.com",
+                email: "johnbfccvndoe@example.com",
                 phone: "(555) 555-5555"
             },
             shipping: {
@@ -141,8 +141,8 @@ export default class App extends React.Component {
                     </Card>
                     <Card style={{ marginTop: height * 0.03, height: 50, justifyContent: 'center', flexDirection: "row", alignItems: 'center', backgroundColor: '#0182C3' }}>
                         <TouchableOpacity
-                            onPress={() => { this.handleSubmit() }}
-                            // onPress={() => { this.props.navigation.navigate('SignInScreen') }}
+                            // onPress={() => { this.handleSubmit() }}
+                            onPress={() => { this.props.navigation.navigate('SignInScreen') }}
                             style={{ width: width * 0.9, height: height * 0.07, justifyContent: 'center' }}>
                             <Text style={{ textAlign: 'center', fontFamily: 'Roboto-Medium', fontSize: 18, marginLeft: 10, color: '#FFF' }}>Continue</Text>
                         </TouchableOpacity>
