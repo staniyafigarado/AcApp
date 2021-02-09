@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Text, View, Dimensions, TextInput, Image, FlatList, TouchableOpacity, ScrollView } from 'react-native';
+import { Text, View, Dimensions, TextInput, Image, FlatList, TouchableOpacity, ScrollView, BackHandler, ToastAndroid } from 'react-native';
 import Styles from '../Styles/Styles';
 const { width, height } = Dimensions.get('window');
 import CustomHeader from '../SharedComponents/CustomHeader';
@@ -7,6 +7,8 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Menu from 'react-native-vector-icons/MaterialIcons';
 import Cart from 'react-native-vector-icons/Feather';
+import WooCommerce from '../Utils/wooApi';
+import Toggle from '../SharedComponents/WhishlistToggle';
 const Ac = require('../Assets/Images/ac.png');
 const data = [
     {
@@ -52,7 +54,42 @@ const data1 = [
         price: '40,000'
     }
 ]
+
 export default class App extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            dataSource: [], selectedItem: null
+        };
+        this.handleBackButtonClick = this.handleBackButtonClick.bind(this);
+    }
+
+    componentDidMount = () => {
+        BackHandler.addEventListener('hardwareBackPress', this.handleBackButtonClick);
+        WooCommerce.get('products?per_page=10', { per_page: 10 }).then(response => {
+            console.log(response.data + "123");
+            this.setState({
+                dataSource: response.data,
+            });
+            // this.arrayholder = response.data;
+        }).catch(error => {
+            console.log(error + "123");
+        });
+        console.log(this.state.dataSource + "Hi")
+    }
+    componentWillUnmount() {
+        BackHandler.removeEventListener('hardwareBackPress', this.handleBackButtonClick);
+    }
+    handleBackButtonClick() {
+        this.props.navigation.goBack(null);
+        return true;
+    }
+    onPressHandler(item) {
+        // alert(JSON.stringify(item))
+        ToastAndroid.show("Item added to whishlist", ToastAndroid.SHORT);
+        this.setState({ selectedItem: item });
+    }
+
     render() {
         return (
             <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
@@ -95,7 +132,7 @@ export default class App extends React.Component {
                 </CustomHeader> */}
                 <View style={{ flexDirection: 'row', marginTop: 10, justifyContent: 'center' }}>
                     <TouchableOpacity
-                        onPress={() => { this.props.navigation.navigate('ShopScreen') }}
+                        onPress={() => { this.props.navigation.navigate('ShopScreen', { productData: item }) }}
                         style={{ backgroundColor: '#0182C3', height: height * .11, width: '43%', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, borderRadius: 3 }}>
                         <Image source={require('../Assets/Icons/shop.png')}
                             style={{ width: 60, height: 60 }}></Image>
@@ -116,13 +153,15 @@ export default class App extends React.Component {
                     </TouchableOpacity>
                 </View>
                 <ScrollView>
-                    <View style={{ marginBottom: height * .12 }}>
+                    <View style={{ marginBottom: height * .13 }}>
                         <View style={{ flexDirection: 'row', paddingHorizontal: 15, marginVertical: height * .03, alignItems: 'center' }}>
                             <View style={{ width: '87%' }}>
                                 <Text style={{ color: '#000000', fontFamily: 'OpenSans-Bold', fontSize: 21, }}>Featured Products</Text>
                             </View>
                             <View style={{ width: '13%' }}>
-                                <Text style={{ color: '#000000', fontFamily: 'Roboto-Light', fontSize: 15 }}>View All</Text>
+                                <TouchableOpacity onPress={() => { this.props.navigation.navigate('ShopScreen') }}>
+                                    <Text style={{ color: '#000000', fontFamily: 'Roboto-Light', fontSize: 15 }}>View All</Text>
+                                </TouchableOpacity>
                             </View>
                         </View>
                         {/* Featured product list */}
@@ -130,28 +169,39 @@ export default class App extends React.Component {
                             <FlatList
                                 horizontal
                                 showsHorizontalScrollIndicator={false}
-                                data={data}
+                                data={this.state.dataSource}
                                 renderItem={({ item }) => (
-                                    <TouchableOpacity onPress={() => { this.props.navigation.navigate('ProductDetailScreen') }}>
-                                        <View style={{ height: 190, width: 191, paddingHorizontal: 7 }}>
-                                            <Image source={item.image}
-                                                style={{ width: '100%', height: 120, borderRadius: 15 }}></Image>
-                                            <View style={{ width: 25, height: 25, backgroundColor: '#F8444F', alignItems: 'center', justifyContent: 'center', borderRadius: 8, position: 'absolute', marginLeft: 15, marginTop: 15 }}>
-                                                <FontAwesome name='heart' size={15} color='#FFF' />
+
+                                    <View style={{ height: '55%', width: 191, paddingHorizontal: 7 }}>
+                                        <TouchableOpacity
+                                            onPress={() => this.onPressHandler(item)}
+                                            style={{ width: 25 }}>
+                                            {this.state.selectedItem == item ? <View style={{ width: 25, height: 25, backgroundColor: '#FFF', alignItems: 'center', justifyContent: 'center', borderRadius: 8 }}>
+                                                <FontAwesome name='heart' size={18} color='#F8444F' />
                                             </View>
-                                            <View style={{ flexDirection: 'row', }}>
-                                                <View style={{ width: '70%' }}>
-                                                    <Text style={{ color: '#000000', fontFamily: 'OpenSans-Regular', fontSize: 18, }}>{item.title}</Text>
+                                                : <View style={{ width: 25, height: 25, backgroundColor: '#F8444F', alignItems: 'center', justifyContent: 'center', borderRadius: 8 }}>
+                                                    <FontAwesome name='heart' size={15} color='#FFF' />
                                                 </View>
-                                                <View style={{ width: '30%', flexDirection: 'row', alignItems: 'center', }}>
-                                                    <Text style={{ color: '#000000', fontFamily: 'Roboto-Light', fontSize: 12, marginRight: 5 }}>{item.rating} / 5</Text>
-                                                    <FontAwesome name='star' size={17} color='#FFE600' />
+                                            }
+                                        </TouchableOpacity>
+                                        <Image source={{ uri: item.images[0] ? item.images[0].src : "https://www.aiimsnagpur.edu.in/sites/default/files/inline-images/no-image-icon_27.png" }}
+                                            style={{ width: '100%', height: 85, borderRadius: 15, justifyContent: 'center', alignItems: 'center' }}></Image>
+
+                                        <TouchableOpacity onPress={() => { this.props.navigation.navigate('ProductDetailScreen') }}>
+                                            <View style={{ flexDirection: 'column', }}>
+                                                <View style={{ width: '100%' }}>
+                                                    <Text style={{ color: '#000000', fontFamily: 'OpenSans-Regular', fontSize: 14, }}>{item.name}</Text>
                                                 </View>
                                             </View>
-                                            <Text style={{ color: '#0182C3', fontFamily: 'Roboto-Regular', fontSize: 14 }}>{item.brand}</Text>
+                                            <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center', }}>
+                                                <Text style={{ color: '#000000', fontFamily: 'Roboto-Light', fontSize: 12 }}>{item.average_rating} / 10.00</Text>
+                                                <FontAwesome name='star' size={17} color='#FFE600' />
+                                            </View>
+                                            <Text style={{ color: '#0182C3', fontFamily: 'Roboto-Regular', fontSize: 14 }}>{item.categories[0].name}</Text>
                                             <Text style={{ color: '#000000', fontFamily: 'OpenSans-SemiBold', fontSize: 16, opacity: 0.5, marginTop: 10 }}>₹ {item.price}</Text>
-                                        </View>
-                                    </TouchableOpacity>
+                                        </TouchableOpacity>
+                                    </View>
+
                                 )}
                                 keyExtractor={item => item.id}
                             // extraData={selected}

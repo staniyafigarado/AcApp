@@ -4,14 +4,50 @@ import TextStyles from '../Styles/TextStyles';
 import Styles from '../Styles/Styles';
 import Card from '../SharedComponents/CustomCard';
 import Icon from 'react-native-vector-icons/Ionicons';
+import axios from 'axios';
+import AsyncStorage from '@react-native-community/async-storage';
 const { width, height } = Dimensions.get('window');
 export default class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            hidePassword: true
+            hidePassword: true,
+            email: '',
+            password: '',
         };
     }
+
+    insertData() {
+        axios.post('https://h2bonza.com/docterac/wp-json/jwt-auth/v1/token?username=' + this.state.email + '&password=' + this.state.password)
+
+            .then(res => {
+                const data = res.data;
+                console.log(data);
+                let userDets = {
+                    username: res.data.user_nicename,
+                    email: res.data.user_email,
+                    // displayname: response.data.user_display_name
+                };
+                alert('Scucessfully signed in with email ' + userDets.email);
+                this.props.navigation.navigate("HomeScreen");
+                this.saveToStorage(data)
+            }).catch(error => {
+                alert("Something went wrong, Check your email and password.")
+                console.log(error)
+            });
+    }
+
+    async saveToStorage(data) {
+        if (data) {
+            console.log("async", data);
+            await AsyncStorage.setItem('loginDetails', JSON.stringify(data)
+            ); console.log(data)
+            return true;
+        }
+
+        return false;
+    }
+
     setPasswordVisibility = () => {
         this.setState({ hidePassword: !this.state.hidePassword });
     }
@@ -23,6 +59,8 @@ export default class App extends React.Component {
                     <TextInput
                         placeholder={'Email Address'}
                         style={Styles.TextInput}
+                        returnKeyType={"next"}
+                        onChangeText={email => this.setState({ email })}
                     ></TextInput>
                 </Card>
                 <Card style={Styles.PasswordField}>
@@ -30,6 +68,7 @@ export default class App extends React.Component {
                         placeholder={'Password'}
                         secureTextEntry={this.state.hidePassword}
                         style={[Styles.TextInput, { width: '85%' }]}
+                        onChangeText={password => this.setState({ password })}
                     ></TextInput>
                     <View style={{ width: '15%', alignItems: 'center', justifyContent: 'center' }}>
                         <TouchableOpacity onPress={this.setPasswordVisibility}>
@@ -46,7 +85,7 @@ export default class App extends React.Component {
                 </TouchableOpacity>
                 <Card style={{ marginTop: height * 0.03, height: 50, justifyContent: 'center', flexDirection: "row", alignItems: 'center', backgroundColor: '#0182C3' }}>
                     <TouchableOpacity
-                        onPress={() => { this.props.navigation.navigate('HomeScreen') }}
+                        onPress={() => this.insertData()}
                         style={{ width: width * 0.9, height: height * 0.07, justifyContent: 'center' }}>
                         <Text style={{ textAlign: 'center', fontFamily: 'Roboto-Medium', fontSize: 18, marginLeft: 10, color: '#FFF' }}>Sign In</Text>
                     </TouchableOpacity>
